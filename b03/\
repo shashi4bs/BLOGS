@@ -36,12 +36,18 @@ def buildNetwork(input_shape, hidden_layer_size, output_shape):
 			weights.append(np.random.rand(hidden_layer_size[index], output_shape))
 			
 		bias.append(np.random.rand(hidden_layer_size[index]))
-	
-	bias.append(output_shape)
+
 	return weights, bias
 	
 weights, bias = buildNetwork(4, [8, 6], 1)
 
+"""
+for _ in weights: 
+	print("Weights : ", _)
+for _ in bias:
+	print("bias : ", _)
+
+"""
 def relu(data):
 	return np.array([max(0, x) for x in data])
 
@@ -51,27 +57,25 @@ def feedForward(input_data, weights, bias):
 	for w, b in zip(weights, bias):
 		output = activation(np.dot(feedData, w) + b)
 		feedData = output
-	return output
+	return sum(output)
 
 print("1st Iteration : ", feedForward(input_data[0], weights, bias))
 
+
 def get_cost(output, index):
-	return (output_data[index] - output) ** 2
+	return output_data[index] - output
 
 def fix_weights_and_bias(cost, weights, bias):
 	"""
-		calculate gradient -> updated weights and bias
+	Perform backpropagation
 	"""
-	# TODO
 	
-	return 
-
 num_iterations = 1000
 for _ in range(num_iterations):
 	cost = 0
 	for i in range(input_data.shape[0]): 
 		output = feedForward(input_data[i], weights, bias)
-		cost += get_cost(output[0], i)
+		cost += get_cost(output, i)
 	print("Cost : ", cost)
 	new_weights, new_bias = fix_weights_and_bias(cost, weights, bias)
 	weights, bias = new_weights, new_bias
