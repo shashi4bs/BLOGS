@@ -42,36 +42,60 @@ def buildNetwork(input_shape, hidden_layer_size, output_shape):
 	
 weights, bias = buildNetwork(4, [8, 6], 1)
 
-def relu(data):
-	return np.array([max(0, x) for x in data])
+def relu(x):
+	return max(0, x)
+
+def diffRelu(x):
+	if x < 0:
+		return 0
+	else:
+		return 1
+def applyDiffRelu(data):
+	return np.array([diffRelu(x) for x in data])
+
+def applyRelu(data):
+	return np.array([relu(x) for x in data])
 
 def feedForward(input_data, weights, bias):
 	feedData = input_data
-	activation = relu
+	activation = applyRelu
+	network = list()
 	for w, b in zip(weights, bias):
-		output = activation(np.dot(feedData, w) + b)
+		z = np.dot(feedData, w) + b
+		output = activation(z)
 		feedData = output
-	return output
+		network.append(z)
+	return output, np.array(network, dtype='object')
+
 
 print("1st Iteration : ", feedForward(input_data[0], weights, bias))
+
 
 def get_cost(output, index):
 	return (output_data[index] - output) ** 2
 
-def fix_weights_and_bias(cost, weights, bias):
-	"""
+def fix_weights_and_bias(cost, network, weights, bias):
+	'''
 		calculate gradient -> updated weights and bias
-	"""
-	# TODO
-	
-	return 
+	'''
+	print(weights[-1])
+	learning_rate = 0.01
+	new_weights, new_bias = list(), list()
+	delta_w = (cost) * network[-1] * applyDiffRelu(network[-2])
+	for index in range(network.shape[0] - 1, -1, -1):
+		weights[index] = weights[index] - (learning_rate * delta_w)
+		print("test: ", weights[index])
+		delta_w = delta_w * network[index] * applyDiffRelu(network[index - 1])					
+	return new_weights, new_bias 
 
-num_iterations = 1000
+num_iterations = 1
 for _ in range(num_iterations):
 	cost = 0
+	network = None
 	for i in range(input_data.shape[0]): 
-		output = feedForward(input_data[i], weights, bias)
+		output, network = feedForward(input_data[i], weights, bias)
 		cost += get_cost(output[0], i)
 	print("Cost : ", cost)
-	new_weights, new_bias = fix_weights_and_bias(cost, weights, bias)
+	new_weights, new_bias = fix_weights_and_bias(cost, network, weights, bias)
 	weights, bias = new_weights, new_bias
+
