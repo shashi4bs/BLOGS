@@ -8,6 +8,7 @@ input_data = np.array([[1, 2, 3, 4],
 			[1, 2, 3, 8]])
 output_data = np.array([4, 5, 6, 7, 8])
 
+#output_data = output_data.reshape(-1, 1)
 print("Input Data : ", input_data)
 print("Output Data : ", output_data)
 
@@ -33,7 +34,7 @@ def buildNetwork(input_shape, hidden_layer_size, output_shape):
 		if index != len(hidden_layer_size) - 1: 
 			weights.append(np.random.rand(hidden_layer_size[index], hidden_layer_size[index + 1]))
 		else:
-			weights.append(np.random.rand(hidden_layer_size[index], output_shape))
+			weights.append(np.random.rand(hidden_layer_size[index]))
 			
 		bias.append(np.random.rand(hidden_layer_size[index]))
 	
@@ -50,11 +51,18 @@ def diffRelu(x):
 		return 0
 	else:
 		return 1
+
 def applyDiffRelu(data):
-	return np.array([diffRelu(x) for x in data])
+	if type(data) == np.float64:
+		return np.array([diffRelu(data)])
+	else:
+		return np.array([diffRelu(x) for x in data])
 
 def applyRelu(data):
-	return np.array([relu(x) for x in data])
+	if type(data) == np.float64:
+		return np.array([relu(data)])
+	else:
+		return np.array([relu(x) for x in data])
 
 def feedForward(input_data, weights, bias):
 	feedData = input_data
@@ -79,38 +87,34 @@ def fix_weights_and_bias(output, network, cost, weights, bias, lambda_w, lambda_
 	"""
 	calculate gradient and add it to lambda_w and lambda_b
 	"""
-	print("network: ", network)
-	print("weights: ", weights)
-	print("bias: ", bias)
 	z = (2 * (network[-1] - output)) * applyDiffRelu(network[-1])
 	lambda_b[-1] += z[0]
-	print(np.dot(lambda_b[-1], network[-2]))
-	print(lambda_w[-1])
 	lambda_w[-1] += np.dot(lambda_b[-1], network[-2])
-	print("lambda_w: ", lambda_w)
-	print("lambda_b: ", lambda_b)	
-	"""
-	TODO:
-	change output data shape -> multidimensional array
-	change applyRelu, applyDiffRelu function to be applied on all layers 
-	""""	 
-	return lambda_w, lambda_b
+		
+	for index in range(2, weights.shape[0] + 1):
+		if index == 2:
+			z = weights[-index + 1].T * applyDiffRelu(network[-index])
+		else:
+			z = np.sum(weights[-index+1].T * applyDiffRelu(network[-index]), axis=0)	
+		lambda_b[-index] += z
+		lambda_w[-index] += network[-index-1].reshape(-1, 1) * z.reshape(1, -1) 
+	for index in range(weights.shape[0]):
+		weights[index] -= (lr * lambda_w[index])
+		bias[index] = bias[index] - (lr * lambda_b[index])
+	return weights, bias
 
-num_iterations = 1
+
+num_iterations = 10
 for _ in range(num_iterations):
 	cost = 0
 	network = None
+	lr = 0.001
 	lambda_w = [np.zeros(w.shape) for w in weights]
 	lambda_b = [np.zeros(b.shape) for b in bias]
 	for i in range(input_data.shape[0]): 
 		output, network = feedForward(input_data[i], weights, bias)
 		cost = get_cost(output[0], i)
-		lambda_w, lambda_b = fix_weights_and_bias(output_data[i], network, cost, weights, bias, lambda_w, lambda_b)
-		break
-	'''
-	calculting gradient post every instance calculation
-	cost = cost / input_data.shape[0]
-	print("Cost : ", cost)
-	new_weights, new_bias = fix_weights_and_bias(cost, network, weights, bias)
-	weights, bias = new_weights, new_bias
-	'''
+		print("Cost : ", cost)
+		weights, bias = fix_weights_and_bias(output_data[i], network, cost, weights, bias, lambda_w, lambda_b)
+	print("Weights: ", weights)
+	print("Bias: ", bias)	
