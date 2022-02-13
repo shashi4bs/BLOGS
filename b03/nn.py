@@ -82,19 +82,18 @@ def fix_weights_and_bias(output, network, cost, weights, bias, lambda_w, lambda_
 	print("network: ", network)
 	print("weights: ", weights)
 	print("bias: ", bias)
-	print("lambda", lambda_b[-1])
 	z = (2 * (network[-1] - output)) * applyDiffRelu(network[-1])
 	lambda_b[-1] += z[0]
-	lambda_w[-1] += sum(z * network[-2])
-	z = z.reshape(1, -1)	
-	for index in range(2, weights.shape[0]):
-		z1 = np.dot(weights[-index + 1], z).T * applyDiffRelu(network[-index])
-		print(np.dot(weights[-index + 1], z).T)
-		print(applyDiffRelu(network[-index]))
-		print("z: ", z1) 
-		lambda_b[-index] += z1[0]
-		lambda_w[-index] += np.dot(z1, network[-index-1])
-		 
+	print(np.dot(lambda_b[-1], network[-2]))
+	print(lambda_w[-1])
+	lambda_w[-1] += np.dot(lambda_b[-1], network[-2])
+	print("lambda_w: ", lambda_w)
+	print("lambda_b: ", lambda_b)	
+	"""
+	TODO:
+	change output data shape -> multidimensional array
+	change applyRelu, applyDiffRelu function to be applied on all layers 
+	""""	 
 	return lambda_w, lambda_b
 
 num_iterations = 1
