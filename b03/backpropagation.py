@@ -46,7 +46,7 @@ d_w_1 = tf.matmul(tf.transpose(a_0), d_z_1)
 
 #updating network
 
-eta = tf.constant(0.5)
+eta = tf.constant(0.01)
 step = [
 	tf.assign(w_1, tf.subtract(w_1, tf.multiply(eta, d_w_1))),
 	tf.assign(b_1, tf.subtract(b_1, tf.multiply(eta, tf.reduce_mean(d_b_1, axis=[0])))),
@@ -69,9 +69,19 @@ def get_one_hot(x):
 		temp.append(temp_arr)
 	return np.array(temp)
 
-for i in range(1000):
-	batch_xs, batch_ys = x_train[i*10: (i+1)*10], y_train[i*10: (i+1)*10]
-	batch_xs = batch_xs.reshape(10, -1)
+print("mnist training data shape: ", x_train.shape)
+print("mnist testing data shape: ", x_test.shape)
+
+batch_size = 100
+training_data_size = x_train.shape[0]
+epochs = 100000
+
+for i in range(epochs):
+	i_index, j_index = (i*batch_size)%training_data_size, ((i+1)*batch_size)%training_data_size
+	if i_index >= j_index:
+		 continue
+	batch_xs, batch_ys = x_train[i_index:j_index], y_train[i_index:j_index]
+	batch_xs = batch_xs.reshape(batch_size, -1)
 	batch_ys = get_one_hot(batch_ys)
 	sess.run(step, feed_dict={
 		a_0: batch_xs,
@@ -80,7 +90,7 @@ for i in range(1000):
 	
 	if i % 100 == 0 :
 		res = sess.run(accuracy_res, feed_dict={
-			a_0: x_test[:1000].reshape(1000, -1),
-			y: get_one_hot(y_test[:1000])
+			a_0: x_test.reshape(x_test.shape[0], -1),
+			y: get_one_hot(y_test)
 		})
 		print(res)
